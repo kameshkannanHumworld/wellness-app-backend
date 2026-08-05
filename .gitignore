@@ -1,0 +1,9 @@
+.env
+*.class
+build/
+.gradle/
+*.iml
+.idea/
+out/
+*firebase-adminsdk*.json
+google-services.json
