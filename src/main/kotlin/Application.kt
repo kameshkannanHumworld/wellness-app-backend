@@ -47,7 +47,7 @@ fun Application.module() {
     configureJwtAuth()
 
     routing {
-        get("/health") { call.respondText("OK") }
+        get("/health") { call.respondText("Deployed successfully") }
         authRoutes()
         // onboardingRoutes(), dashboardRoutes(), waterRoutes(), activityRoutes(),
         // bloodPressureRoutes(), reminderRoutes() — added next, following this same pattern.
