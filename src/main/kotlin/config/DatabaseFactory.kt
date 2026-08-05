@@ -14,6 +14,8 @@ object DatabaseFactory {
             maximumPoolSize = 10
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_READ_COMMITTED"
+            connectionTimeout = 10_000 // fail fast (10s) instead of hanging on network issues
+            addDataSourceProperty("sslmode", "require") // Supabase pooler requires SSL
             validate()
         }
         val dataSource = HikariDataSource(hikariConfig)
