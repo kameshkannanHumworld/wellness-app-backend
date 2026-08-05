@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env
+*.md
+build/
+.gradle/
+.idea/
+*.iml
+out/
+*firebase-adminsdk*.json
+google-services.json
