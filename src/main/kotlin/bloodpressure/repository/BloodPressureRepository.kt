@@ -2,6 +2,7 @@ package com.wellnessapp.bloodpressure.repository
 
 import com.wellnessapp.bloodpressure.model.BloodPressureLogs
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 import java.time.LocalDate
