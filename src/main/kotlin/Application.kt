@@ -2,6 +2,7 @@ package com.wellnessapp
 
 import com.wellnessapp.auth.routes.authRoutes
 import com.wellnessapp.onboarding.routes.onboardingRoutes
+import com.wellnessapp.hydration.routes.hydrationRoutes
 import com.wellnessapp.common.exception.registerExceptionHandling
 import com.wellnessapp.common.security.configureJwtAuth
 import com.wellnessapp.config.DatabaseFactory
@@ -51,7 +52,8 @@ fun Application.module() {
         get("/health") { call.respondText("Deployed successfully") }
         authRoutes()
         onboardingRoutes()
-        // dashboardRoutes(), waterRoutes(), activityRoutes(),
+        hydrationRoutes()
+        // dashboardRoutes(), activityRoutes(),
         // bloodPressureRoutes(), reminderRoutes() — added next, following this same pattern.
     }
 }
