@@ -5,6 +5,7 @@ import com.wellnessapp.onboarding.routes.onboardingRoutes
 import com.wellnessapp.hydration.routes.hydrationRoutes
 import com.wellnessapp.activity.routes.activityRoutes
 import com.wellnessapp.bloodpressure.routes.bloodPressureRoutes
+import com.wellnessapp.dashboard.routes.dashboardRoutes
 import com.wellnessapp.common.exception.registerExceptionHandling
 import com.wellnessapp.common.security.configureJwtAuth
 import com.wellnessapp.config.DatabaseFactory
@@ -57,6 +58,7 @@ fun Application.module() {
         hydrationRoutes()
         activityRoutes()
         bloodPressureRoutes()
-        // dashboardRoutes(), reminderRoutes() — added next, following this same pattern.
+        dashboardRoutes()
+        // reminderRoutes() — added next, following this same pattern.
     }
 }
