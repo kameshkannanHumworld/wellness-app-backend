@@ -3,6 +3,7 @@ package com.wellnessapp.hydration.repository
 import com.wellnessapp.hydration.model.WaterLogs
 import com.wellnessapp.onboarding.model.DailyTargets
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 import java.time.LocalDate
