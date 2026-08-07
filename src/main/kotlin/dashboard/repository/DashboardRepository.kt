@@ -2,8 +2,10 @@ package com.wellnessapp.dashboard.repository
 
 import com.wellnessapp.activity.model.Activities
 import com.wellnessapp.bloodpressure.model.BloodPressureLogs
+import com.wellnessapp.heartrate.model.HeartRateLogs
 import com.wellnessapp.hydration.model.WaterLogs
 import com.wellnessapp.onboarding.model.DailyTargets
+import com.wellnessapp.spo2.model.Spo2Logs
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.math.BigDecimal
@@ -14,9 +16,10 @@ import java.util.UUID
 
 /**
  * The Dashboard module owns no table of its own — it's a read-only aggregation layer over
- * water_logs, activities, blood_pressure_logs, and daily_targets (all already modeled by the
- * hydration/activity/bloodpressure/onboarding modules). Reusing their Exposed `Table` objects here
- * mirrors how `hydration`/`activity` already reuse `onboarding.model.DailyTargets` for goals.
+ * water_logs, activities, blood_pressure_logs, heart_rate_logs, spo2_logs, and daily_targets (all
+ * already modeled by the hydration/activity/bloodpressure/heartrate/spo2/onboarding modules).
+ * Reusing their Exposed `Table` objects here mirrors how `hydration`/`activity` already reuse
+ * `onboarding.model.DailyTargets` for goals.
  */
 data class DailyTargetsSnapshot(
     val waterGoalMl: Int?,
@@ -29,6 +32,26 @@ data class LatestBloodPressureSnapshot(
     val diastolic: Int,
     val pulse: Int?,
     val measuredAt: Instant
+)
+
+data class LatestHeartRateSnapshot(
+    val bpm: Int,
+    val source: String,
+    val measuredAt: Instant
+)
+
+data class LatestSpo2Snapshot(
+    val spo2Percentage: Int,
+    val source: String,
+    val measuredAt: Instant
+)
+
+data class TodayActivityTotals(
+    val steps: Double,
+    val workout: Double,
+    val sleep: Double,
+    val movement: Double,
+    val caloriesBurned: Int
 )
 
 object DashboardRepository {
@@ -81,6 +104,53 @@ object DashboardRepository {
                 )
             }
             .singleOrNull()
+    }
+
+    fun latestHeartRate(userId: UUID): LatestHeartRateSnapshot? = transaction {
+        HeartRateLogs.selectAll().where { HeartRateLogs.userId eq userId }
+            .orderBy(HeartRateLogs.measuredAt, SortOrder.DESC)
+            .limit(1)
+            .map {
+                LatestHeartRateSnapshot(
+                    bpm = it[HeartRateLogs.bpm],
+                    source = it[HeartRateLogs.source],
+                    measuredAt = it[HeartRateLogs.measuredAt]
+                )
+            }
+            .singleOrNull()
+    }
+
+    fun latestSpo2(userId: UUID): LatestSpo2Snapshot? = transaction {
+        Spo2Logs.selectAll().where { Spo2Logs.userId eq userId }
+            .orderBy(Spo2Logs.measuredAt, SortOrder.DESC)
+            .limit(1)
+            .map {
+                LatestSpo2Snapshot(
+                    spo2Percentage = it[Spo2Logs.spo2Percentage],
+                    source = it[Spo2Logs.source],
+                    measuredAt = it[Spo2Logs.measuredAt]
+                )
+            }
+            .singleOrNull()
+    }
+
+    /** Today's (UTC calendar day) activity totals by type, plus total calories — one query, aggregated in Kotlin. */
+    fun activityTotalsToday(userId: UUID): TodayActivityTotals = transaction {
+        val (start, end) = todayRangeUtc()
+        val rows = Activities.selectAll()
+            .where { (Activities.userId eq userId) and (Activities.loggedAt greaterEq start) and (Activities.loggedAt less end) }
+            .toList()
+
+        fun sumFor(type: String) = rows.filter { it[Activities.activityType] == type }
+            .sumOf { it[Activities.value]?.toDouble() ?: 0.0 }
+
+        TodayActivityTotals(
+            steps = sumFor("steps"),
+            workout = sumFor("workout"),
+            sleep = sumFor("sleep"),
+            movement = sumFor("movement"),
+            caloriesBurned = rows.sumOf { it[Activities.calories] ?: 0 }
+        )
     }
 
     /** Step totals for the last 7 UTC calendar days (today + previous 6). Days with no logs are simply absent. */

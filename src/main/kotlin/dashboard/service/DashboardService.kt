@@ -1,9 +1,12 @@
 package com.wellnessapp.dashboard.service
 
+import com.wellnessapp.dashboard.dto.DashboardActivitySummary
 import com.wellnessapp.dashboard.dto.DashboardBloodPressure
+import com.wellnessapp.dashboard.dto.DashboardHeartRate
 import com.wellnessapp.dashboard.dto.DashboardInsightResponse
 import com.wellnessapp.dashboard.dto.DashboardMetric
 import com.wellnessapp.dashboard.dto.DashboardResponse
+import com.wellnessapp.dashboard.dto.DashboardSpo2
 import com.wellnessapp.dashboard.dto.DashboardWeeklyStepsResponse
 import com.wellnessapp.dashboard.dto.StepsDayTotal
 import com.wellnessapp.dashboard.repository.DashboardRepository
@@ -46,12 +49,32 @@ object DashboardService {
             DashboardBloodPressure(it.systolic, it.diastolic, it.pulse, it.measuredAt.toString())
         }
 
+        val heartRate = DashboardRepository.latestHeartRate(userId)?.let {
+            DashboardHeartRate(it.bpm, it.source, it.measuredAt.toString())
+        }
+
+        val spo2 = DashboardRepository.latestSpo2(userId)?.let {
+            DashboardSpo2(it.spo2Percentage, it.source, it.measuredAt.toString())
+        }
+
+        val activityTotals = DashboardRepository.activityTotalsToday(userId)
+        val todayActivities = DashboardActivitySummary(
+            steps = activityTotals.steps,
+            workout = activityTotals.workout,
+            sleep = activityTotals.sleep,
+            movement = activityTotals.movement,
+            caloriesBurned = activityTotals.caloriesBurned
+        )
+
         return DashboardResponse(
             wellnessScore = wellnessScore,
             water = waterMetric,
             steps = stepsMetric,
             sleep = sleepMetric,
-            latestBloodPressure = bp
+            latestBloodPressure = bp,
+            latestHeartRate = heartRate,
+            latestSpo2 = spo2,
+            todayActivities = todayActivities
         )
     }
 
@@ -72,6 +95,16 @@ object DashboardService {
         dashboard.latestBloodPressure?.let { bp ->
             if (bp.systolic >= 140 || bp.diastolic >= 90) {
                 insights += "Your last blood pressure reading (${bp.systolic}/${bp.diastolic}) was elevated — consider checking in with a doctor."
+            }
+        }
+        dashboard.latestHeartRate?.let { hr ->
+            if (hr.bpm > 120 || hr.bpm < 45) {
+                insights += "Your last heart rate reading (${hr.bpm} bpm) was outside the typical resting range — worth keeping an eye on."
+            }
+        }
+        dashboard.latestSpo2?.let { spo2 ->
+            if (spo2.spo2Percentage < 92) {
+                insights += "Your last SpO2 reading (${spo2.spo2Percentage}%) was low — consider checking in with a doctor."
             }
         }
 

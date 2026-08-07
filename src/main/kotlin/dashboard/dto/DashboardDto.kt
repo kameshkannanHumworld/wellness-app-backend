@@ -18,12 +18,40 @@ data class DashboardBloodPressure(
 )
 
 @Serializable
+data class DashboardHeartRate(
+    val bpm: Int,
+    val source: String,
+    val measuredAt: String
+)
+
+@Serializable
+data class DashboardSpo2(
+    val spo2Percentage: Int,
+    val source: String,
+    val measuredAt: String
+)
+
+// Today's activity totals by type, UTC calendar day — a dashboard-scoped cousin of ActivityDayTotal
+// (activity module) without the `date` field, since the dashboard is always "today" by definition.
+@Serializable
+data class DashboardActivitySummary(
+    val steps: Double = 0.0,
+    val workout: Double = 0.0,
+    val sleep: Double = 0.0,
+    val movement: Double = 0.0,
+    val caloriesBurned: Int = 0
+)
+
+@Serializable
 data class DashboardResponse(
     val wellnessScore: Int,   // ((water.score + steps.score + sleep.score) / 3) * 100, rounded
     val water: DashboardMetric,
     val steps: DashboardMetric,
     val sleep: DashboardMetric,
-    val latestBloodPressure: DashboardBloodPressure? = null
+    val latestBloodPressure: DashboardBloodPressure? = null,
+    val latestHeartRate: DashboardHeartRate? = null,
+    val latestSpo2: DashboardSpo2? = null,
+    val todayActivities: DashboardActivitySummary = DashboardActivitySummary()
 )
 
 @Serializable
