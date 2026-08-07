@@ -2,6 +2,7 @@ package com.wellnessapp.reminders.repository
 
 import com.wellnessapp.reminders.model.Reminders
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 import java.time.LocalTime
