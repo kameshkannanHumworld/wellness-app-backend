@@ -113,7 +113,7 @@ object DashboardRepository {
             .map {
                 LatestHeartRateSnapshot(
                     bpm = it[HeartRateLogs.bpm],
-                    source = it[HeartRateLogs.source],
+                    source = it[HeartRateLogs.sourceType],
                     measuredAt = it[HeartRateLogs.measuredAt]
                 )
             }
@@ -127,7 +127,7 @@ object DashboardRepository {
             .map {
                 LatestSpo2Snapshot(
                     spo2Percentage = it[Spo2Logs.spo2Percentage],
-                    source = it[Spo2Logs.source],
+                    source = it[Spo2Logs.sourceType],
                     measuredAt = it[Spo2Logs.measuredAt]
                 )
             }
