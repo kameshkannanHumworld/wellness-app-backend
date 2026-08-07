@@ -6,6 +6,8 @@ import com.wellnessapp.hydration.routes.hydrationRoutes
 import com.wellnessapp.activity.routes.activityRoutes
 import com.wellnessapp.bloodpressure.routes.bloodPressureRoutes
 import com.wellnessapp.dashboard.routes.dashboardRoutes
+import com.wellnessapp.heartrate.routes.heartRateRoutes
+import com.wellnessapp.spo2.routes.spo2Routes
 import com.wellnessapp.common.exception.registerExceptionHandling
 import com.wellnessapp.common.security.configureJwtAuth
 import com.wellnessapp.config.DatabaseFactory
@@ -59,6 +61,8 @@ fun Application.module() {
         activityRoutes()
         bloodPressureRoutes()
         dashboardRoutes()
+        heartRateRoutes()
+        spo2Routes()
         // reminderRoutes() — added next, following this same pattern.
     }
 }
