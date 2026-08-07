@@ -5,39 +5,77 @@ import com.wellnessapp.onboarding.model.Goals
 import com.wellnessapp.onboarding.model.HealthIntegrations
 import com.wellnessapp.onboarding.model.Profiles
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 
+data class ProfileRecord(
+    val id: UUID,
+    val userId: UUID,
+    val age: Int?,
+    val gender: String?,
+    val heightCm: BigDecimal?,
+    val weightKg: BigDecimal?,
+    val stressLevel: String?
+)
+
 object OnboardingRepository {
 
     // ---- Profile (basic info) — upserted at the app layer; see note in OnboardingTables.kt ----
 
-    fun upsertProfile(userId: UUID, age: Int, gender: String, heightCm: BigDecimal, weightKg: BigDecimal) = transaction {
-        val existingId = Profiles.selectAll().where { Profiles.userId eq userId }
-            .map { it[Profiles.id] }
+    fun findProfile(userId: UUID): ProfileRecord? = transaction {
+        Profiles.selectAll().where { Profiles.userId eq userId }
+            .map { it.toProfileRecord() }
+            .singleOrNull()
+    }
+
+    /**
+     * `stressLevel` is nullable in the request (see BasicInfoRequest) — when omitted, this
+     * preserves whatever stress level was previously saved rather than wiping it to null, since
+     * age/gender/height/weight are always fully replaced but stressLevel may legitimately be set
+     * once and not resent on every subsequent basic-info save.
+     */
+    fun upsertProfile(userId: UUID, age: Int, gender: String, heightCm: BigDecimal, weightKg: BigDecimal, stressLevel: String?): ProfileRecord = transaction {
+        val existing = Profiles.selectAll().where { Profiles.userId eq userId }
+            .map { it.toProfileRecord() }
             .singleOrNull()
 
-        if (existingId != null) {
-            Profiles.update({ Profiles.id eq existingId }) {
+        val resolvedStressLevel = stressLevel ?: existing?.stressLevel
+        val profileId = existing?.id ?: UUID.randomUUID()
+
+        if (existing != null) {
+            Profiles.update({ Profiles.id eq existing.id }) {
                 it[Profiles.age] = age
                 it[Profiles.gender] = gender
                 it[Profiles.heightCm] = heightCm
                 it[Profiles.weightKg] = weightKg
+                it[Profiles.stressLevel] = resolvedStressLevel
             }
         } else {
             Profiles.insert {
-                it[id] = UUID.randomUUID()
+                it[id] = profileId
                 it[Profiles.userId] = userId
                 it[Profiles.age] = age
                 it[Profiles.gender] = gender
                 it[Profiles.heightCm] = heightCm
                 it[Profiles.weightKg] = weightKg
+                it[Profiles.stressLevel] = resolvedStressLevel
             }
         }
+
+        ProfileRecord(profileId, userId, age, gender, heightCm, weightKg, resolvedStressLevel)
     }
+
+    private fun ResultRow.toProfileRecord() = ProfileRecord(
+        id = this[Profiles.id],
+        userId = this[Profiles.userId],
+        age = this[Profiles.age],
+        gender = this[Profiles.gender],
+        heightCm = this[Profiles.heightCm],
+        weightKg = this[Profiles.weightKg],
+        stressLevel = this[Profiles.stressLevel]
+    )
 
     // ---- Goals (multi-select) — full set replaced on every save ----
 

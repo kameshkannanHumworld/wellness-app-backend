@@ -17,6 +17,10 @@ object Profiles : Table("profiles") {
     val gender = varchar("gender", 20).nullable()
     val heightCm = decimal("height_cm", 5, 2).nullable()
     val weightKg = decimal("weight_kg", 5, 2).nullable()
+    // Added Aug 7, 2026 — set during onboarding's basic-info step. CHECK (stress_level IN
+    // ('low','normal','high')) enforced in Postgres; nullable since existing/new rows may not
+    // have gone through a self-assessment yet.
+    val stressLevel = varchar("stress_level", 10).nullable()
 
     override val primaryKey = PrimaryKey(id)
 }

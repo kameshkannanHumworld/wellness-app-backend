@@ -16,6 +16,8 @@ import java.util.UUID
  */
 object OnboardingService {
 
+    private val ALLOWED_STRESS_LEVELS = setOf("low", "normal", "high")
+
     fun saveBasicInfo(userId: UUID, request: BasicInfoRequest): BasicInfoResponse {
         val errors = mutableListOf<Pair<String, String>>()
 
@@ -25,18 +27,37 @@ object OnboardingService {
         if (request.heightCm < 50.0 || request.heightCm > 250.0) errors += "heightCm" to "Must be between 50 and 250 cm"
         if (request.weightKg < 20.0 || request.weightKg > 300.0) errors += "weightKg" to "Must be between 20 and 300 kg"
 
+        val normalizedStressLevel = request.stressLevel?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
+        if (normalizedStressLevel != null && normalizedStressLevel !in ALLOWED_STRESS_LEVELS) {
+            errors += "stressLevel" to "Must be one of: ${ALLOWED_STRESS_LEVELS.joinToString(", ")}"
+        }
+
         if (errors.isNotEmpty()) throw ValidationException(errors)
 
         val gender = request.gender.trim()
-        OnboardingRepository.upsertProfile(
+        val saved = OnboardingRepository.upsertProfile(
             userId = userId,
             age = request.age,
             gender = gender,
             heightCm = request.heightCm.toScaledBigDecimal(2),
-            weightKg = request.weightKg.toScaledBigDecimal(2)
+            weightKg = request.weightKg.toScaledBigDecimal(2),
+            stressLevel = normalizedStressLevel
         )
 
-        return BasicInfoResponse(request.age, gender, request.heightCm, request.weightKg)
+        return BasicInfoResponse(request.age, gender, request.heightCm, request.weightKg, saved.stressLevel)
+    }
+
+    /** Reads straight from `profiles` — returns nulls for any field never saved, rather than 404,
+     *  since a user with no basic-info yet is a normal (pre-onboarding) state, not an error. */
+    fun getProfile(userId: UUID): ProfileResponse {
+        val record = OnboardingRepository.findProfile(userId)
+        return ProfileResponse(
+            age = record?.age,
+            gender = record?.gender,
+            heightCm = record?.heightCm?.toDouble(),
+            weightKg = record?.weightKg?.toDouble(),
+            stressLevel = record?.stressLevel
+        )
     }
 
     fun saveGoals(userId: UUID, request: GoalsRequest): GoalsResponse {

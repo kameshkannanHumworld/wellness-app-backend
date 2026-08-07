@@ -19,11 +19,19 @@ fun Route.onboardingRoutes() {
     route("/api/v1/onboarding") {
         authenticate(AUTH_JWT) {
 
-            // Step 1 — name/age/gender/height/weight
+            // Step 1 — name/age/gender/height/weight (+ optional stressLevel)
             post("/basic") {
                 val userId = call.currentUserId()
                 val body = call.receive<BasicInfoRequest>()
                 val result = OnboardingService.saveBasicInfo(userId, body)
+                call.respond(HttpStatusCode.OK, ApiSuccess(data = result))
+            }
+
+            // Fetches the caller's `profiles` row directly — age/gender/height/weight/stressLevel.
+            // Fields are null (not a 404) if the user hasn't completed basic info yet.
+            get("/profile") {
+                val userId = call.currentUserId()
+                val result = OnboardingService.getProfile(userId)
                 call.respond(HttpStatusCode.OK, ApiSuccess(data = result))
             }
 

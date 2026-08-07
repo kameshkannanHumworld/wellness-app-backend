@@ -9,7 +9,8 @@ data class BasicInfoRequest(
     val age: Int,
     val gender: String,
     val heightCm: Double,
-    val weightKg: Double
+    val weightKg: Double,
+    val stressLevel: String? = null   // one of: low, normal, high — optional; omit to leave unchanged
 )
 
 @Serializable
@@ -17,7 +18,19 @@ data class BasicInfoResponse(
     val age: Int,
     val gender: String,
     val heightCm: Double,
-    val weightKg: Double
+    val weightKg: Double,
+    val stressLevel: String? = null
+)
+
+// --- Fetch profile (reads the `profiles` table directly, does not require onboarding to be "complete") ---
+
+@Serializable
+data class ProfileResponse(
+    val age: Int?,
+    val gender: String?,
+    val heightCm: Double?,
+    val weightKg: Double?,
+    val stressLevel: String?
 )
 
 // --- Step 2: goals (multi-select) ---
