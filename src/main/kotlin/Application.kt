@@ -8,6 +8,9 @@ import com.wellnessapp.bloodpressure.routes.bloodPressureRoutes
 import com.wellnessapp.dashboard.routes.dashboardRoutes
 import com.wellnessapp.heartrate.routes.heartRateRoutes
 import com.wellnessapp.spo2.routes.spo2Routes
+import com.wellnessapp.reminders.routes.reminderRoutes
+import com.wellnessapp.devices.routes.deviceRoutes
+import com.wellnessapp.fcm.ReminderScheduler
 import com.wellnessapp.common.exception.registerExceptionHandling
 import com.wellnessapp.common.security.configureJwtAuth
 import com.wellnessapp.config.DatabaseFactory
@@ -53,6 +56,12 @@ fun Application.module() {
 
     configureJwtAuth()
 
+    // Background job that polls `reminders` once a minute and fires FCM pushes for anything due —
+    // see ReminderScheduler's kdoc for the UTC-only-clock-time limitation. `this` (Application)
+    // is itself a CoroutineScope, so the job's lifecycle is naturally tied to the app.
+    ReminderScheduler.start(this)
+    monitor.subscribe(ApplicationStopping) { ReminderScheduler.stop() }
+
     routing {
         get("/health") { call.respondText("Deployed successfully") }
         authRoutes()
@@ -63,6 +72,7 @@ fun Application.module() {
         dashboardRoutes()
         heartRateRoutes()
         spo2Routes()
-        // reminderRoutes() — added next, following this same pattern.
+        reminderRoutes()
+        deviceRoutes()
     }
 }
